@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Headers } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CreateUserDto, LoginUserDto } from '../users/user.dto';
@@ -19,8 +19,11 @@ export class AuthController {
 
   @Post('signout')
   @UseGuards(JwtAuthGuard)
-  signout(@Request() req) {
-    // No-op for token-based signout
-    return { message: 'Signed out successfully' };
+  signout(@Headers('authorization') authHeader: string) {
+    const token = authHeader?.split(' ')[1];
+    if (token) {
+      return this.authService.signout(token);
+    }
+    return { message: 'Invalid token' };
   }
 }

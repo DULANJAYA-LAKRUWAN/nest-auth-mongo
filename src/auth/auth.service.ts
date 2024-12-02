@@ -6,6 +6,8 @@ import { LoginUserDto, CreateUserDto } from '../users/user.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly invalidatedTokens: Set<string> = new Set();
+
   constructor(private userService: UserService, private jwtService: JwtService) {}
 
   async signup(userData: CreateUserDto) {
@@ -22,5 +24,14 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
     };
+  }
+
+  signout(token: string) {
+    this.invalidatedTokens.add(token);
+    return { message: 'Signed out successfully' };
+  }
+
+  isTokenInvalidated(token: string): boolean {
+    return this.invalidatedTokens.has(token);
   }
 }

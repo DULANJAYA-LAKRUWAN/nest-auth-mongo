@@ -1,9 +1,9 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, Length, IsDateString } from 'class-validator';
 
 export class CreateUserDto {
   @IsNotEmpty()
   @IsString()
-  name: string;
+  name: string; // User Name
 
   @IsNotEmpty()
   @IsEmail()
@@ -13,17 +13,17 @@ export class CreateUserDto {
   @Length(6, 20)
   password: string;
 
-  @IsOptional()
+  @IsNotEmpty()
+  @IsDateString()
+  birthday: string; // ISO date string (YYYY-MM-DD)
+
+  @IsNotEmpty()
   @IsString()
-  birthday?: string;
+  birthTime: string; // Time in string format
 
   @IsOptional()
   @IsString()
-  birthTime?: string;
-
-  @IsOptional()
-  @IsString()
-  contactNumber?: string;
+  contactNumber?: string; // Optional field
 }
 
 export class LoginUserDto {
