@@ -3,7 +3,7 @@ import { IsEmail, IsNotEmpty, IsOptional, IsString, Length, IsDateString } from 
 export class CreateUserDto {
   @IsNotEmpty()
   @IsString()
-  name: string; // User Name
+  name: string;
 
   @IsNotEmpty()
   @IsEmail()
@@ -15,15 +15,15 @@ export class CreateUserDto {
 
   @IsNotEmpty()
   @IsDateString()
-  birthday: string; // ISO date string (YYYY-MM-DD)
+  birthday: string;
 
   @IsNotEmpty()
   @IsString()
-  birthTime: string; // Time in string format
+  birthTime: string;
 
   @IsOptional()
   @IsString()
-  contactNumber?: string; // Optional field
+  contactNumber?: string;
 }
 
 export class LoginUserDto {
