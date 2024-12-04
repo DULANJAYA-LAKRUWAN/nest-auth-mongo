@@ -4,7 +4,7 @@ import { Document } from 'mongoose';
 @Schema()
 export class User extends Document {
   @Prop({ required: true })
-  name: string;
+  userName: string;
 
   @Prop({ required: true, unique: true })
   email: string;
@@ -12,14 +12,14 @@ export class User extends Document {
   @Prop({ required: true })
   password: string;
 
-  @Prop({ required: true })
-  birthday: string; // ISO format
+  @Prop()
+  birthday: string;
 
-  @Prop({ required: true })
+  @Prop()
   birthTime: string;
 
   @Prop()
-  contactNumber?: string;
+  contactNumber: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

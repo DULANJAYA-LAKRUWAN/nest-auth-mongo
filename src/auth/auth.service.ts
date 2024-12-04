@@ -1,37 +1,31 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { UserService } from '../users/user.service';
-import { LoginUserDto, CreateUserDto } from '../users/user.dto';
+import { UserService } from '../user/user.service';
+import { SignUpDto } from './dto/signup.dto';
+import { SignInDto } from './dto/signin.dto';
 
 @Injectable()
 export class AuthService {
-  private readonly invalidatedTokens: Set<string> = new Set();
+  constructor(
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-  constructor(private userService: UserService, private jwtService: JwtService) {}
-
-  async signup(userData: CreateUserDto) {
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-    return this.userService.createUser({ ...userData, password: hashedPassword });
+  async signUp(signUpDto: SignUpDto) {
+    const { password, ...rest } = signUpDto;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await this.userService.create({ ...rest, password: hashedPassword });
+    return { message: 'User registered successfully', user };
   }
 
-  async signin(loginDto: LoginUserDto) {
-    const user = await this.userService.findByEmail(loginDto.email);
-    if (!user || !(await bcrypt.compare(loginDto.password, user.password))) {
+  async signIn(signInDto: SignInDto) {
+    const { email, password } = signInDto;
+    const user = await this.userService.findByEmail(email);
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    const payload = { email: user.email, sub: user._id };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
-  }
-
-  signout(token: string) {
-    this.invalidatedTokens.add(token);
-    return { message: 'Signed out successfully' };
-  }
-
-  isTokenInvalidated(token: string): boolean {
-    return this.invalidatedTokens.has(token);
+    const token = this.jwtService.sign({ sub: user._id, email: user.email });
+    return { accessToken: token };
   }
 }

@@ -1,29 +1,26 @@
-import { Controller, Post, Body, UseGuards, Request, Headers } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { SignUpDto } from './dto/signup.dto';
+import { SignInDto } from './dto/signin.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { CreateUserDto, LoginUserDto } from '../users/user.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post('signup')
-  async signup(@Body() createUserDto: CreateUserDto) {
-    return this.authService.signup(createUserDto);
+  signUp(@Body() signUpDto: SignUpDto) {
+    return this.authService.signUp(signUpDto);
   }
 
   @Post('signin')
-  async signin(@Body() loginDto: LoginUserDto) {
-    return this.authService.signin(loginDto);
+  signIn(@Body() signInDto: SignInDto) {
+    return this.authService.signIn(signInDto);
   }
 
-  @Post('signout')
   @UseGuards(JwtAuthGuard)
-  signout(@Headers('authorization') authHeader: string) {
-    const token = authHeader?.split(' ')[1];
-    if (token) {
-      return this.authService.signout(token);
-    }
-    return { message: 'Invalid token' };
+  @Get('profile')
+  getProfile(@Request() req) {
+    return req.user;
   }
 }
