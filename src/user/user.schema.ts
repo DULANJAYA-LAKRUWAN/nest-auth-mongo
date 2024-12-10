@@ -12,14 +12,14 @@ export class User extends Document {
   @Prop({ required: true })
   password: string;
 
-  @Prop()
+  @Prop({ required: true })
   birthday: string;
 
-  @Prop()
+  @Prop({ required: true })
   birthTime: string;
 
   @Prop()
-  contactNumber: string;
+  contactNumber?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

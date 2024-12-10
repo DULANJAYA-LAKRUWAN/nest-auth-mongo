@@ -5,18 +5,19 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { UserModule } from '../user/user.module';
+import { SharedModule } from '../shared/shared.module'; // Import SharedModule
 
 @Module({
   imports: [
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'secretKey', // Use .env for secret
-      signOptions: { expiresIn: '24h' }, // Token validity
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: process.env.JWT_EXPIRE_TIME },
     }),
     UserModule,
+    SharedModule, // Add SharedModule here
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
-  exports: [AuthService], // Export services if used in other modules
 })
 export class AuthModule {}

@@ -12,10 +12,10 @@ export class UserService {
   }
 
   async findByEmail(email: string) {
-    return this.userModel.findOne({ email });
+    return this.userModel.findOne({ email }).exec();
   }
 
   async findById(userId: string) {
-    return this.userModel.findById(userId);
+    return this.userModel.findById(userId).exec();
   }
 }

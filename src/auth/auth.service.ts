@@ -2,8 +2,6 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserService } from '../user/user.service';
-import { SignUpDto } from './dto/signup.dto';
-import { SignInDto } from './dto/signin.dto';
 
 @Injectable()
 export class AuthService {
@@ -12,11 +10,11 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async signUp(signUpDto: SignUpDto) {
-    const { password, ...rest } = signUpDto;
+  async signUp(userDto) {
+    const { password, ...rest } = userDto;
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const userExists = await this.userService.findByEmail(signUpDto.email);
+    const userExists = await this.userService.findByEmail(userDto.email);
     if (userExists) {
       throw new UnauthorizedException('Email already exists');
     }
@@ -25,22 +23,52 @@ export class AuthService {
     return { message: 'User successfully created', user };
   }
 
-  async signIn(signInDto: SignInDto) {
-    const user = await this.userService.findByEmail(signInDto.email);
+  async signIn(email: string, password: string) {
+    const user = await this.userService.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(signInDto.password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const token = this.jwtService.sign({
-      sub: user._id,
-      email: user.email,
-    });
+    const accessToken = this.jwtService.sign(
+      { sub: user._id, email: user.email },
+      { secret: process.env.JWT_SECRET, expiresIn: process.env.JWT_EXPIRE_TIME },
+    );
 
-    return { accessToken: token };
+    const refreshToken = this.jwtService.sign(
+      { sub: user._id },
+      { secret: process.env.REFRESH_TOKEN_SECRET, expiresIn: process.env.REFRESH_TOKEN_EXPIRE },
+    );
+
+    return { accessToken, refreshToken };
+  }
+
+  async refreshTokens(refreshToken: string) {
+    try {
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: process.env.REFRESH_TOKEN_SECRET,
+      });
+
+      const user = await this.userService.findById(payload.sub);
+      if (!user) throw new UnauthorizedException('Invalid token');
+
+      const accessToken = this.jwtService.sign(
+        { sub: user._id, email: user.email },
+        { secret: process.env.JWT_SECRET, expiresIn: process.env.JWT_EXPIRE_TIME },
+      );
+
+      const newRefreshToken = this.jwtService.sign(
+        { sub: user._id },
+        { secret: process.env.REFRESH_TOKEN_SECRET, expiresIn: process.env.REFRESH_TOKEN_EXPIRE },
+      );
+
+      return { accessToken, refreshToken: newRefreshToken };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
   }
 }

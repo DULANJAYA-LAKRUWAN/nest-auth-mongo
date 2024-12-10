@@ -6,8 +6,8 @@ import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }), // Load environment variables
-    MongooseModule.forRoot(process.env.MONGO_URI), // MongoDB connection
+    ConfigModule.forRoot({ isGlobal: true }),
+    MongooseModule.forRoot(process.env.MONGO_URI),
     AuthModule,
     UserModule,
   ],
