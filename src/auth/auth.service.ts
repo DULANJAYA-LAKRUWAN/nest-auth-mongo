@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserService } from '../user/user.service';
+import { CreateUserDto } from './dtos/user.dto';
 
 @Injectable()
 export class AuthService {
@@ -10,7 +11,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async signUp(userDto) {
+  async signUp(userDto: CreateUserDto) {
     const { password, ...rest } = userDto;
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -19,7 +20,10 @@ export class AuthService {
       throw new UnauthorizedException('Email already exists');
     }
 
-    const user = await this.userService.create({ ...rest, password: hashedPassword });
+    const user = await this.userService.create({
+      ...rest,
+      password: hashedPassword,
+    });
     return { message: 'User successfully created', user };
   }
 
@@ -36,15 +40,28 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(
       { sub: user._id, email: user.email },
-      { secret: process.env.JWT_SECRET, expiresIn: process.env.JWT_EXPIRE_TIME },
+      {
+        secret: process.env.JWT_SECRET,
+        expiresIn: process.env.JWT_EXPIRE_TIME,
+      },
     );
 
     const refreshToken = this.jwtService.sign(
       { sub: user._id },
-      { secret: process.env.REFRESH_TOKEN_SECRET, expiresIn: process.env.REFRESH_TOKEN_EXPIRE },
+      {
+        secret: process.env.REFRESH_TOKEN_SECRET,
+        expiresIn: process.env.REFRESH_TOKEN_EXPIRE,
+      },
     );
 
-    return { accessToken, refreshToken };
+    // Remove sensitive information before returning
+    const { password: _, ...userWithoutPassword } = user.toObject();
+
+    return {
+      accessToken,
+      refreshToken,
+      user: userWithoutPassword,
+    };
   }
 
   async refreshTokens(refreshToken: string) {
@@ -58,12 +75,18 @@ export class AuthService {
 
       const accessToken = this.jwtService.sign(
         { sub: user._id, email: user.email },
-        { secret: process.env.JWT_SECRET, expiresIn: process.env.JWT_EXPIRE_TIME },
+        {
+          secret: process.env.JWT_SECRET,
+          expiresIn: process.env.JWT_EXPIRE_TIME,
+        },
       );
 
       const newRefreshToken = this.jwtService.sign(
         { sub: user._id },
-        { secret: process.env.REFRESH_TOKEN_SECRET, expiresIn: process.env.REFRESH_TOKEN_EXPIRE },
+        {
+          secret: process.env.REFRESH_TOKEN_SECRET,
+          expiresIn: process.env.REFRESH_TOKEN_EXPIRE,
+        },
       );
 
       return { accessToken, refreshToken: newRefreshToken };

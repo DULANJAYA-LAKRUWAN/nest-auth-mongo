@@ -4,20 +4,22 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
+import { RefreshTokenStrategy } from './refresh.strategy';
 import { UserModule } from '../user/user.module';
-import { SharedModule } from '../shared/shared.module'; // Import SharedModule
+import { SharedModule } from '../shared/shared.module';
 
 @Module({
   imports: [
-    PassportModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: process.env.JWT_EXPIRE_TIME },
     }),
     UserModule,
-    SharedModule, // Add SharedModule here
+    SharedModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, RefreshTokenStrategy],
+  exports: [PassportModule, JwtStrategy],
 })
 export class AuthModule {}
