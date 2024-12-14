@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserService } from '../user/user.service';
@@ -54,7 +58,6 @@ export class AuthService {
       },
     );
 
-    // Remove sensitive information before returning
     const { password: _, ...userWithoutPassword } = user.toObject();
 
     return {
@@ -64,34 +67,11 @@ export class AuthService {
     };
   }
 
-  async refreshTokens(refreshToken: string) {
-    try {
-      const payload = this.jwtService.verify(refreshToken, {
-        secret: process.env.REFRESH_TOKEN_SECRET,
-      });
-
-      const user = await this.userService.findById(payload.sub);
-      if (!user) throw new UnauthorizedException('Invalid token');
-
-      const accessToken = this.jwtService.sign(
-        { sub: user._id, email: user.email },
-        {
-          secret: process.env.JWT_SECRET,
-          expiresIn: process.env.JWT_EXPIRE_TIME,
-        },
-      );
-
-      const newRefreshToken = this.jwtService.sign(
-        { sub: user._id },
-        {
-          secret: process.env.REFRESH_TOKEN_SECRET,
-          expiresIn: process.env.REFRESH_TOKEN_EXPIRE,
-        },
-      );
-
-      return { accessToken, refreshToken: newRefreshToken };
-    } catch (error) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+  async getProfile(userId: string) {
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
+    return user;
   }
 }

@@ -5,17 +5,19 @@ import { User } from './user.schema';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private readonly userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private readonly userModel: Model<User>,
+  ) {}
 
-  async create(userData: Partial<User>) {
-    return this.userModel.create(userData);
+  async create(user: Partial<User>) {
+    return this.userModel.create(user);
   }
 
   async findByEmail(email: string) {
-    return this.userModel.findOne({ email }).exec();
+    return this.userModel.findOne({ email });
   }
 
-  async findById(userId: string) {
-    return this.userModel.findById(userId).exec();
+  async findById(id: string) {
+    return this.userModel.findById(id).select('-password'); // Exclude password field
   }
 }
